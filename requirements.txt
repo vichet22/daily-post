@@ -1,0 +1,16 @@
+# Daily Post Flask Application Requirements
+# Core Flask packages
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Migrate>=4.0.0
+
+# Database packages
+psycopg2-binary>=2.9.0
+SQLAlchemy>=2.0.0
+
+# Utility packages
+python-dotenv>=1.0.0
+Pillow>=10.0.0
+
+# Production server packages
+gunicorn>=21.0.0
