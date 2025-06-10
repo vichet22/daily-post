@@ -39,8 +39,9 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 # File upload configuration
-app.config['UPLOAD_FOLDER'] = '../frontend/static/images'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+# Use environment variable for production (Vercel uses /tmp)
+app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', '../frontend/static/images')
+app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB default
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
