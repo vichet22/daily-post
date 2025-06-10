@@ -1,3 +1,4 @@
+
 # Daily Post Flask Application Requirements
 # Core Flask packages
 Flask>=2.3.0
@@ -14,3 +15,19 @@ Pillow>=10.0.0
 
 # Production server packages
 gunicorn>=21.0.0
+
+# Environment variables
+DB_HOST=your-database-host
+DB_PORT=5432
+DB_NAME=your-database-name
+DB_USER=your-database-user
+DB_PASSWORD=your-database-password
+SECRET_KEY=your-secret-key
+FLASK_ENV=production
+PORT=8080
+
+git add .
+git commit -m "Add deployment configuration files"
+git push
+
+

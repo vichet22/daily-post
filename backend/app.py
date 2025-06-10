@@ -243,6 +243,10 @@ def create_sample_data():
         print(f"✅ Created {len(sample_posts)} sample posts!")
 
 if __name__ == '__main__':
+    # Get port from environment (for Railway, Heroku, etc.)
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_ENV', 'production') == 'development'
+
     with app.app_context():
         try:
             # Test database connection
@@ -258,10 +262,9 @@ if __name__ == '__main__':
             create_sample_data()
 
         except Exception as e:
-            print(f"❌ Database connection failed: {e}")
-            print("💡 Make sure PostgreSQL is running and the database 'daily_post' exists")
-            print("💡 Check your database credentials in the configuration")
-            exit(1)
+            print(f"⚠️ Database connection warning: {e}")
+            print("💡 App will start but database features may not work")
+            # Don't exit in production, let the app start anyway
 
-    print("🚀 Starting Daily Post application on PostgreSQL...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print(f"🚀 Starting Daily Post application on port {port}...")
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
