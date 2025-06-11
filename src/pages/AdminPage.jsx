@@ -48,7 +48,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.title || !formData.excerpt || !formData.content) {
@@ -56,19 +56,22 @@ const AdminPage = () => {
       return;
     }
 
-    if (editingPost) {
-      dispatch({
-        type: ACTIONS.UPDATE_POST,
-        payload: { ...formData, id: editingPost.id },
-      });
-    } else {
-      dispatch({
-        type: ACTIONS.ADD_POST,
-        payload: formData,
-      });
+    try {
+      if (editingPost) {
+        await updatePost(
+          { ...formData, id: editingPost.id },
+          formData.imageFile
+        );
+        alert("Post updated successfully!");
+      } else {
+        await addPost(formData, formData.imageFile);
+        alert("Post created successfully!");
+      }
+      resetForm();
+    } catch (error) {
+      console.error("Error saving post:", error);
+      alert(`Error: ${error.message}`);
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -101,12 +104,15 @@ const AdminPage = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (postId) => {
+  const handleDelete = async (postId) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
-      dispatch({
-        type: ACTIONS.DELETE_POST,
-        payload: postId,
-      });
+      try {
+        await deletePost(postId);
+        alert("Post deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        alert(`Error: ${error.message}`);
+      }
     }
   };
 

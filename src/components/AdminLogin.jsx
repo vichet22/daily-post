@@ -1,101 +1,76 @@
-import { useState } from 'react'
-import { useApp } from '../context/AppContext'
-import './AdminLogin.css'
+import { useState } from "react";
+import { useApp } from "../context/AppContext";
+import "./AdminLogin.css";
 
 const AdminLogin = ({ onClose }) => {
-  const { dispatch, ACTIONS } = useApp()
+  const { dispatch, ACTIONS } = useApp();
   const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  })
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+    username: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Demo credentials - in a real app, this would be handled by a backend
+  // Admin credentials for local authentication
   const ADMIN_CREDENTIALS = {
-    username: 'admin@gmail.com',
-    password: 'vichet872003@#'
-  }
+    username: "admin",
+    password: "admin123",
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
+      [name]: value,
+    }));
     // Clear error when user starts typing
-    if (error) setError('')
-  }
+    if (error) setError("");
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (formData.username === ADMIN_CREDENTIALS.username && 
-        formData.password === ADMIN_CREDENTIALS.password) {
-      
+    if (
+      formData.username === ADMIN_CREDENTIALS.username &&
+      formData.password === ADMIN_CREDENTIALS.password
+    ) {
       // Successful login
-      dispatch({ type: ACTIONS.SET_ADMIN_AUTHENTICATED, payload: true })
-      dispatch({ type: ACTIONS.SET_ADMIN_MODE, payload: true })
-      
+      dispatch({ type: ACTIONS.SET_ADMIN_AUTHENTICATED, payload: true });
+      dispatch({ type: ACTIONS.SET_ADMIN_MODE, payload: true });
+
       // Show success message
-      alert('Login successful! Welcome to Admin Panel.')
-      
-      if (onClose) onClose()
+      alert("Login successful! Welcome to Admin Panel.");
+
+      if (onClose) onClose();
     } else {
-      setError('Invalid username or password. Please try again.')
+      setError("Invalid username or password. Please try again.");
     }
-    
-    setIsLoading(false)
-  }
+
+    setLoading(false);
+  };
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget && onClose) {
-      onClose()
+      onClose();
     }
-  }
-
-  const handleDemoLogin = () => {
-    setFormData({
-      username: ADMIN_CREDENTIALS.username,
-      password: ADMIN_CREDENTIALS.password
-    })
-  }
+  };
 
   return (
     <div className="admin-login-overlay" onClick={handleBackdropClick}>
       <div className="admin-login-modal">
         <div className="login-header">
           <h2>Admin Login</h2>
-          <button 
-            className="close-button" 
-            onClick={onClose}
-            type="button"
-          >
+          <button className="close-button" onClick={onClose} type="button">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="demo-credentials">
-            <p>Demo Credentials:</p>
-            <div className="credentials-info">
-              <span><strong>Username:</strong> admin</span>
-              <span><strong>Password:</strong> admin123</span>
-            </div>
-            <button 
-              type="button" 
-              className="demo-fill-button"
-              onClick={handleDemoLogin}
-            >
-              Fill Demo Credentials
-            </button>
-          </div>
-
           {error && (
             <div className="error-message">
               <span className="error-icon">⚠️</span>
@@ -112,7 +87,7 @@ const AdminLogin = ({ onClose }) => {
               value={formData.username}
               onChange={handleInputChange}
               required
-              disabled={isLoading}
+              disabled={loading}
               placeholder="Enter your username"
             />
           </div>
@@ -126,34 +101,32 @@ const AdminLogin = ({ onClose }) => {
               value={formData.password}
               onChange={handleInputChange}
               required
-              disabled={isLoading}
+              disabled={loading}
               placeholder="Enter your password"
             />
           </div>
 
           <div className="form-actions">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="login-button"
-              disabled={isLoading || !formData.username || !formData.password}
+              disabled={loading || !formData.username || !formData.password}
             >
-              {isLoading ? (
+              {loading ? (
                 <>
                   <span className="loading-spinner"></span>
                   Logging in...
                 </>
               ) : (
-                <>
-                  🔐 Login to Admin Panel
-                </>
+                <>🔐 Login to Admin Panel</>
               )}
             </button>
-            
-            <button 
-              type="button" 
+
+            <button
+              type="button"
               className="cancel-button"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={loading}
             >
               Cancel
             </button>
@@ -168,7 +141,7 @@ const AdminLogin = ({ onClose }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AdminLogin
+export default AdminLogin;
