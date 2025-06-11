@@ -573,4 +573,9 @@ if __name__ == '__main__':
             exit(1)
 
     print("🚀 Starting Daily Post application on PostgreSQL...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    # Get port from environment variable (for production) or use 5000 for development
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_ENV', 'development') != 'production'
+
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
