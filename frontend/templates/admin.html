@@ -1,0 +1,1397 @@
+{% extends "base.html" %} {% block title %}Admin Dashboard - Daily Post{%
+endblock %} {% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <h1><i class="fas fa-cog me-2"></i>Admin Dashboard</h1>
+  <div class="d-flex align-items-center">
+    <span class="me-3">
+      <i class="fas fa-user me-1"></i>
+      Welcome,
+      <strong>{{ current_user.username if current_user else 'Admin' }}</strong>
+    </span>
+    <a
+      href="{{ url_for('admin_logout') }}"
+      class="btn btn-outline-danger btn-sm"
+    >
+      <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4>{{ posts|length }}</h4>
+            <p class="mb-0">Total Posts</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-newspaper fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4>{{ posts|selectattr('featured')|list|length }}</h4>
+            <p class="mb-0">Featured Posts</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-star fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-info text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4>{{ posts|map(attribute='category')|unique|list|length }}</h4>
+            <p class="mb-0">Categories</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-tags fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4>{{ posts|map(attribute='author')|unique|list|length }}</h4>
+            <p class="mb-0">Authors</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Posts Management -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Manage Posts</h5>
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-success btn-sm" onclick="quickCreate()" title="Quick Create New Post">
+        <i class="fas fa-plus me-1"></i>Quick Create
+      </button>
+      <a href="{{ url_for('new_post') }}" class="btn btn-outline-success btn-sm">
+        <i class="fas fa-pen me-1"></i>Full Editor
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if posts %}
+    <!-- Search and Filter Bar -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control"
+            id="searchInput"
+            placeholder="Search posts..."
+            onkeyup="searchPosts()"
+          />
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-filter"></i>
+          </span>
+          <select
+            class="form-select"
+            id="categoryFilter"
+            onchange="filterByCategory()"
+          >
+            <option value="">All Categories</option>
+            <option value="News">News</option>
+            <option value="Technology">Technology</option>
+            <option value="Business">Business</option>
+            <option value="Sports">Sports</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="General">General</option>
+            <option value="Science">Science</option>
+            <option value="Politics">Politics</option>
+            <option value="Travel">Travel</option>
+            <option value="Food">Food</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-sort"></i>
+          </span>
+          <select class="form-select" id="sortFilter" onchange="sortPosts()">
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="title-asc">Title A-Z</option>
+            <option value="title-desc">Title Z-A</option>
+            <option value="author-asc">Author A-Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2 text-end">
+        <div class="btn-group" role="group">
+          <button
+            type="button"
+            class="btn btn-outline-success btn-sm"
+            onclick="quickCreate()"
+            title="Quick Create Post"
+            data-bs-toggle="tooltip"
+          >
+            <i class="fas fa-plus me-1"></i>Create
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            onclick="bulkEdit()"
+            id="bulkEditBtn"
+            disabled
+            title="Bulk Edit Selected Posts"
+          >
+            <i class="fas fa-edit me-1"></i>Edit
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            onclick="bulkDelete()"
+            id="bulkDeleteBtn"
+            disabled
+            title="Bulk Delete Selected Posts"
+          >
+            <i class="fas fa-trash me-1"></i>Delete
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            onclick="toggleSelectAll()"
+            id="selectAllBtn"
+            title="Select/Deselect All Posts"
+          >
+            <i class="fas fa-check-square me-1"></i>All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts Count -->
+    <div class="row mb-2">
+      <div class="col-12">
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          Showing <strong id="visibleCount">{{ posts|length }}</strong> of
+          <strong id="totalCount">{{ posts|length }}</strong> posts
+        </small>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover" id="postsTable">
+        <thead>
+          <tr>
+            <th width="40">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="selectAllCheckbox"
+                  onchange="toggleSelectAll()"
+                />
+              </div>
+            </th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th width="120">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for post in posts %}
+          <tr
+            data-post-id="{{ post.id }}"
+            data-category="{{ post.category }}"
+            data-title="{{ post.title }}"
+            data-author="{{ post.author }}"
+            data-date="{{ post.date_posted.strftime('%Y-%m-%d') }}"
+          >
+            <td>
+              <div class="form-check">
+                <input
+                  class="form-check-input post-checkbox"
+                  type="checkbox"
+                  value="{{ post.id }}"
+                  onchange="updateBulkActions()"
+                />
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                {% if post.featured %}
+                <i class="fas fa-star text-warning me-2"></i>
+                {% endif %}
+                <div>
+                  <strong>{{ post.title }}</strong>
+                  <br />
+                  <small class="text-muted">{{ post.content[:50] }}...</small>
+                </div>
+              </div>
+            </td>
+            <td>{{ post.author }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ post.category }}</span>
+            </td>
+            <td>
+              <small>{{ post.date_posted.strftime('%m/%d/%Y') }}</small>
+              <br />
+              <small class="text-muted"
+                >{{ post.date_posted.strftime('%I:%M %p') }}</small
+              >
+            </td>
+            <td>
+              {% if post.featured %}
+              <span class="badge bg-warning text-dark">Featured</span>
+              {% else %}
+              <span class="badge bg-success">Published</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <a
+                  href="{{ url_for('post', id=post.id) }}"
+                  class="btn btn-outline-primary"
+                  title="View Post"
+                  data-bs-toggle="tooltip"
+                  target="_blank"
+                >
+                  <i class="fas fa-eye"></i>
+                </a>
+                <button
+                  class="btn btn-outline-info"
+                  onclick="quickEdit({{ post.id }}, '{{ post.title|replace("'", "\\'") }}', '{{ post.author|replace("'", "\\'") }}', '{{ post.category }}', {{ 'true' if post.featured else 'false' }})"
+                  title="Quick Edit"
+                  data-bs-toggle="tooltip"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <a
+                  href="{{ url_for('edit_post', id=post.id) }}"
+                  class="btn btn-outline-warning"
+                  title="Full Edit"
+                  data-bs-toggle="tooltip"
+                >
+                  <i class="fas fa-pen"></i>
+                </a>
+                <button
+                  class="btn btn-outline-success"
+                  onclick="toggleFeatured({{ post.id }}, {{ 'true' if post.featured else 'false' }})"
+                  title="{{ 'Remove from Featured' if post.featured else 'Mark as Featured' }}"
+                  data-bs-toggle="tooltip"
+                  id="featured-btn-{{ post.id }}"
+                >
+                  <i class="fas fa-star{{ '' if post.featured else '-o' }}"></i>
+                </button>
+                <button
+                  class="btn btn-outline-danger"
+                  onclick="confirmDelete({{ post.id }}, '{{ post.title|replace("'", "\\'") }}')"
+                  title="Delete Post"
+                  data-bs-toggle="tooltip"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+      <h4 class="text-muted">No posts yet</h4>
+      <p class="text-muted">Posts will appear here when available.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mt-4">
+  <div class="col-md-6 mx-auto">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Quick Stats</h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h5 class="text-primary">{{ posts|length }}</h5>
+            <small class="text-muted">Total Posts</small>
+          </div>
+          <div class="col-6">
+            <h5 class="text-success">
+              {{ posts|selectattr('featured')|list|length }}
+            </h5>
+            <small class="text-muted">Featured</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close modal"
+          title="Close modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the post:</p>
+        <strong id="postTitle"></strong>
+        <p class="mt-2 text-danger">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <a href="#" id="deleteConfirmBtn" class="btn btn-danger">Delete Post</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Edit Modal -->
+<div class="modal fade" id="quickEditModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>Quick Edit Post
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          title="Close modal"
+        ></button>
+      </div>
+      <form id="quickEditForm" method="POST">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="quickEditTitle" class="form-label">
+                  <i class="fas fa-heading me-1"></i>Post Title *
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="quickEditTitle"
+                  name="title"
+                  required
+                  placeholder="Enter post title"
+                >
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="quickEditCategory" class="form-label">
+                  <i class="fas fa-tag me-1"></i>Category
+                </label>
+                <select class="form-select" id="quickEditCategory" name="category">
+                  <option value="News">News</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Business">Business</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="General">General</option>
+                  <option value="Science">Science</option>
+                  <option value="Politics">Politics</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Food">Food</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="quickEditAuthor" class="form-label">
+                  <i class="fas fa-user me-1"></i>Author
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="quickEditAuthor"
+                  name="author"
+                  placeholder="Author name"
+                >
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fas fa-cog me-1"></i>Options
+                </label>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="quickEditFeatured"
+                    name="featured"
+                  >
+                  <label class="form-check-label" for="quickEditFeatured">
+                    <i class="fas fa-star text-warning me-1"></i>Mark as Featured
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="quickEditContent" class="form-label">
+              <i class="fas fa-align-left me-1"></i>Content Preview
+            </label>
+            <textarea
+              class="form-control"
+              id="quickEditContent"
+              name="content"
+              rows="4"
+              placeholder="Content preview (first 200 characters)..."
+              readonly
+            ></textarea>
+            <div class="form-text">
+              <i class="fas fa-info-circle me-1"></i>
+              For full content editing, use the "Full Edit" button
+            </div>
+          </div>
+
+          <input type="hidden" id="quickEditPostId" name="post_id">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveQuickEdit()" title="Save Quick Edit Changes">
+            <i class="fas fa-save me-1"></i>Save Changes
+          </button>
+          <a href="#" id="fullEditLink" class="btn btn-warning">
+            <i class="fas fa-pen me-1"></i>Full Edit
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Edit Modal -->
+<div class="modal fade" id="bulkEditModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>Bulk Edit Posts
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          title="Close modal"
+        ></button>
+      </div>
+      <form id="bulkEditForm" method="POST">
+        <div class="modal-body">
+          <p class="mb-3">
+            <i class="fas fa-info-circle me-1"></i>
+            Apply changes to <strong id="bulkEditCount">0</strong> selected posts
+          </p>
+
+          <div class="mb-3">
+            <label for="bulkEditCategory" class="form-label">
+              <i class="fas fa-tag me-1"></i>Change Category
+            </label>
+            <select class="form-select" id="bulkEditCategory" name="category">
+              <option value="">-- Keep Current --</option>
+              <option value="News">News</option>
+              <option value="Technology">Technology</option>
+              <option value="Business">Business</option>
+              <option value="Sports">Sports</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="General">General</option>
+              <option value="Science">Science</option>
+              <option value="Politics">Politics</option>
+              <option value="Travel">Travel</option>
+              <option value="Food">Food</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="bulkEditAuthor" class="form-label">
+              <i class="fas fa-user me-1"></i>Change Author
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="bulkEditAuthor"
+              name="author"
+              placeholder="Leave empty to keep current authors"
+            >
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              <i class="fas fa-star me-1"></i>Featured Status
+            </label>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="featured_action"
+                id="bulkFeaturedKeep"
+                value="keep"
+                checked
+              >
+              <label class="form-check-label" for="bulkFeaturedKeep">
+                Keep current status
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="featured_action"
+                id="bulkFeaturedAdd"
+                value="add"
+              >
+              <label class="form-check-label" for="bulkFeaturedAdd">
+                Mark all as Featured
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="featured_action"
+                id="bulkFeaturedRemove"
+                value="remove"
+              >
+              <label class="form-check-label" for="bulkFeaturedRemove">
+                Remove Featured status
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveBulkEdit()" title="Apply Bulk Edit Changes">
+            <i class="fas fa-save me-1"></i>Apply Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Create Modal -->
+<div class="modal fade" id="quickCreateModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-plus me-2"></i>Quick Create New Post
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          title="Close modal"
+        ></button>
+      </div>
+      <form id="quickCreateForm" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Left Column - Main Content -->
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="createTitle" class="form-label">
+                  <i class="fas fa-heading me-1"></i>Post Title *
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="createTitle"
+                  name="title"
+                  required
+                  placeholder="Enter an engaging title for your post"
+                  onkeyup="updateCreatePreview()"
+                >
+              </div>
+
+              <div class="mb-3">
+                <label for="createContent" class="form-label">
+                  <i class="fas fa-align-left me-1"></i>Post Content *
+                </label>
+                <textarea
+                  class="form-control"
+                  id="createContent"
+                  name="content"
+                  rows="12"
+                  required
+                  placeholder="Write your post content here..."
+                  onkeyup="updateCreatePreview()"
+                ></textarea>
+                <div class="form-text">
+                  <span id="wordCount">0 words</span> •
+                  <span id="charCount">0 characters</span>
+                </div>
+              </div>
+
+              <!-- Image Upload Section -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fas fa-image me-1"></i>Post Image
+                </label>
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="createImageFile" class="form-label">Upload Image</label>
+                    <input
+                      type="file"
+                      class="form-control"
+                      id="createImageFile"
+                      name="image_file"
+                      accept="image/*"
+                      onchange="previewCreateImage(this)"
+                    >
+                    <div class="form-text">PNG, JPG, JPEG, GIF, WebP (Max: 16MB)</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="createImageUrl" class="form-label">Or Image URL</label>
+                    <input
+                      type="url"
+                      class="form-control"
+                      id="createImageUrl"
+                      name="image_url"
+                      placeholder="https://example.com/image.jpg"
+                      onchange="previewCreateImageUrl(this)"
+                    >
+                    <div class="form-text">Enter a direct link to an image</div>
+                  </div>
+                </div>
+
+                <!-- Image Preview -->
+                <div class="mt-3">
+                  <div id="createImagePreview" class="d-none">
+                    <label class="form-label">Preview:</label>
+                    <div class="border rounded p-2">
+                      <img id="createPreviewImg" src="" alt="Image preview" class="img-fluid" style="max-height: 200px;">
+                      <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeCreateImage()" title="Remove Selected Image">
+                        <i class="fas fa-times"></i> Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column - Settings & Preview -->
+            <div class="col-md-4">
+              <!-- Post Settings -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Post Settings</h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <label for="createAuthor" class="form-label">
+                      <i class="fas fa-user me-1"></i>Author
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="createAuthor"
+                      name="author"
+                      value="{{ current_user.username if current_user else 'Admin' }}"
+                      placeholder="Author name"
+                      onkeyup="updateCreatePreview()"
+                    >
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="createCategory" class="form-label">
+                      <i class="fas fa-tag me-1"></i>Category
+                    </label>
+                    <select class="form-select" id="createCategory" name="category" onchange="updateCreatePreview()">
+                      <option value="General">General</option>
+                      <option value="News">News</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Business">Business</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Science">Science</option>
+                      <option value="Politics">Politics</option>
+                      <option value="Travel">Travel</option>
+                      <option value="Food">Food</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="createFeatured"
+                        name="featured"
+                        onchange="updateCreatePreview()"
+                      >
+                      <label class="form-check-label" for="createFeatured">
+                        <i class="fas fa-star text-warning me-1"></i>Mark as Featured
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Preview -->
+              <div class="card">
+                <div class="card-header">
+                  <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Live Preview</h6>
+                </div>
+                <div class="card-body">
+                  <div id="createPreviewContent">
+                    <h6 id="previewCreateTitle" class="text-muted">Title will appear here...</h6>
+                    <small class="text-muted">
+                      <span id="previewCreateAuthor">Admin</span> •
+                      <span id="previewCreateCategory">General</span>
+                    </small>
+                    <p id="previewCreateText" class="mt-2 text-muted">Content preview will appear here...</p>
+                    <div id="previewCreateFeatured" style="display: none;">
+                      <span class="badge bg-warning text-dark">
+                        <i class="fas fa-star me-1"></i>Featured
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-outline-primary" onclick="saveDraft()" title="Save Draft for Later">
+            <i class="fas fa-save me-1"></i>Save Draft
+          </button>
+          <button type="button" class="btn btn-success" onclick="saveQuickCreate()" title="Create and Publish Post">
+            <i class="fas fa-plus me-1"></i>Create Post
+          </button>
+          <a href="{{ url_for('new_post') }}" class="btn btn-warning">
+            <i class="fas fa-pen me-1"></i>Full Editor
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Progress Modal -->
+<div class="modal fade" id="uploadProgressModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i class="fas fa-upload fa-3x text-primary"></i>
+        </div>
+        <h6>Creating Post...</h6>
+        <div class="progress mb-3">
+          <div class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar" style="width: 0%" id="uploadProgress"></div>
+        </div>
+        <small class="text-muted" id="uploadStatus">Preparing...</small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // Initialize tooltips
+  document.addEventListener("DOMContentLoaded", function () {
+    var tooltipTriggerList = [].slice.call(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+
+  function confirmDelete(postId, postTitle) {
+    document.getElementById("postTitle").textContent = postTitle;
+    document.getElementById(
+      "deleteConfirmBtn"
+    ).href = `/admin/delete/${postId}`;
+    new bootstrap.Modal(document.getElementById("deleteModal")).show();
+  }
+
+  // Search functionality
+  function searchPosts() {
+    const searchTerm = document
+      .getElementById("searchInput")
+      .value.toLowerCase();
+    const rows = document.querySelectorAll("#postsTable tbody tr");
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const title = row.getAttribute("data-title").toLowerCase();
+      const author = row.getAttribute("data-author").toLowerCase();
+      const category = row.getAttribute("data-category").toLowerCase();
+
+      if (
+        title.includes(searchTerm) ||
+        author.includes(searchTerm) ||
+        category.includes(searchTerm)
+      ) {
+        row.style.display = "";
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    document.getElementById("visibleCount").textContent = visibleCount;
+  }
+
+  // Category filter
+  function filterByCategory() {
+    const selectedCategory = document.getElementById("categoryFilter").value;
+    const rows = document.querySelectorAll("#postsTable tbody tr");
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const category = row.getAttribute("data-category");
+
+      if (selectedCategory === "" || category === selectedCategory) {
+        row.style.display = "";
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    document.getElementById("visibleCount").textContent = visibleCount;
+  }
+
+  // Sort posts
+  function sortPosts() {
+    const sortValue = document.getElementById("sortFilter").value;
+    const tbody = document.querySelector("#postsTable tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+    rows.sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortValue) {
+        case "date-desc":
+          aValue = new Date(a.getAttribute("data-date"));
+          bValue = new Date(b.getAttribute("data-date"));
+          return bValue - aValue;
+        case "date-asc":
+          aValue = new Date(a.getAttribute("data-date"));
+          bValue = new Date(b.getAttribute("data-date"));
+          return aValue - bValue;
+        case "title-asc":
+          aValue = a.getAttribute("data-title").toLowerCase();
+          bValue = b.getAttribute("data-title").toLowerCase();
+          return aValue.localeCompare(bValue);
+        case "title-desc":
+          aValue = a.getAttribute("data-title").toLowerCase();
+          bValue = b.getAttribute("data-title").toLowerCase();
+          return bValue.localeCompare(aValue);
+        case "author-asc":
+          aValue = a.getAttribute("data-author").toLowerCase();
+          bValue = b.getAttribute("data-author").toLowerCase();
+          return aValue.localeCompare(bValue);
+        default:
+          return 0;
+      }
+    });
+
+    rows.forEach((row) => tbody.appendChild(row));
+  }
+
+  // Bulk selection
+  function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById("selectAllCheckbox");
+    const postCheckboxes = document.querySelectorAll(".post-checkbox");
+    const isChecked = selectAllCheckbox.checked;
+
+    postCheckboxes.forEach((checkbox) => {
+      if (checkbox.closest("tr").style.display !== "none") {
+        checkbox.checked = isChecked;
+      }
+    });
+
+    updateBulkActions();
+  }
+
+  // Update bulk action buttons
+  function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll(".post-checkbox:checked");
+    const bulkEditBtn = document.getElementById("bulkEditBtn");
+    const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+
+    if (checkedBoxes.length > 0) {
+      bulkEditBtn.disabled = false;
+      bulkEditBtn.innerHTML = `<i class="fas fa-edit me-1"></i>Edit (${checkedBoxes.length})`;
+      bulkDeleteBtn.disabled = false;
+      bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-1"></i>Delete (${checkedBoxes.length})`;
+    } else {
+      bulkEditBtn.disabled = true;
+      bulkEditBtn.innerHTML = '<i class="fas fa-edit me-1"></i>Edit';
+      bulkDeleteBtn.disabled = true;
+      bulkDeleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Delete';
+    }
+
+    // Update select all button
+    const allCheckboxes = document.querySelectorAll(".post-checkbox");
+    const visibleCheckboxes = Array.from(allCheckboxes).filter(
+      (cb) => cb.closest("tr").style.display !== "none"
+    );
+    const checkedVisible = visibleCheckboxes.filter((cb) => cb.checked);
+
+    const selectAllCheckbox = document.getElementById("selectAllCheckbox");
+    if (
+      checkedVisible.length === visibleCheckboxes.length &&
+      visibleCheckboxes.length > 0
+    ) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.indeterminate = false;
+    } else if (checkedVisible.length > 0) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = true;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+  }
+
+  // Bulk delete
+  function bulkDelete() {
+    const checkedBoxes = document.querySelectorAll(".post-checkbox:checked");
+    if (checkedBoxes.length === 0) return;
+
+    const postIds = Array.from(checkedBoxes).map((cb) => cb.value);
+    const postTitles = Array.from(checkedBoxes).map((cb) =>
+      cb.closest("tr").getAttribute("data-title")
+    );
+
+    if (
+      confirm(
+        `Are you sure you want to delete ${postIds.length} post(s)?\n\nThis action cannot be undone.`
+      )
+    ) {
+      // Create form to submit bulk delete
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/admin/bulk-delete";
+
+      postIds.forEach((id) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "post_ids";
+        input.value = id;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Quick Edit functionality
+  function quickEdit(postId, title, author, category, featured) {
+    document.getElementById('quickEditPostId').value = postId;
+    document.getElementById('quickEditTitle').value = title;
+    document.getElementById('quickEditAuthor').value = author;
+    document.getElementById('quickEditCategory').value = category;
+    document.getElementById('quickEditFeatured').checked = featured;
+    document.getElementById('fullEditLink').href = `/admin/edit/${postId}`;
+
+    // Load content preview
+    fetch(`/admin/post/${postId}/preview`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('quickEditContent').value = data.content.substring(0, 200) + '...';
+      })
+      .catch(err => {
+        document.getElementById('quickEditContent').value = 'Content preview unavailable';
+      });
+
+    new bootstrap.Modal(document.getElementById('quickEditModal')).show();
+  }
+
+  // Save Quick Edit
+  function saveQuickEdit() {
+    const form = document.getElementById('quickEditForm');
+    const formData = new FormData(form);
+    const postId = document.getElementById('quickEditPostId').value;
+
+    fetch(`/admin/quick-edit/${postId}`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('quickEditModal')).hide();
+        location.reload(); // Refresh to show changes
+      } else {
+        alert('Error updating post: ' + data.message);
+      }
+    })
+    .catch(err => {
+      alert('Error updating post: ' + err.message);
+    });
+  }
+
+  // Toggle Featured Status
+  function toggleFeatured(postId, currentStatus) {
+    const newStatus = !currentStatus;
+
+    fetch(`/admin/toggle-featured/${postId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ featured: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update button appearance
+        const btn = document.getElementById(`featured-btn-${postId}`);
+        const icon = btn.querySelector('i');
+
+        if (newStatus) {
+          icon.className = 'fas fa-star';
+          btn.title = 'Remove from Featured';
+          btn.setAttribute('onclick', `toggleFeatured(${postId}, true)`);
+        } else {
+          icon.className = 'fas fa-star-o';
+          btn.title = 'Mark as Featured';
+          btn.setAttribute('onclick', `toggleFeatured(${postId}, false)`);
+        }
+
+        // Update status badge
+        const row = btn.closest('tr');
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (newStatus) {
+          statusCell.innerHTML = '<span class="badge bg-warning text-dark">Featured</span>';
+        } else {
+          statusCell.innerHTML = '<span class="badge bg-success">Published</span>';
+        }
+      } else {
+        alert('Error updating featured status: ' + data.message);
+      }
+    })
+    .catch(err => {
+      alert('Error updating featured status: ' + err.message);
+    });
+  }
+
+  // Bulk Edit functionality
+  function bulkEdit() {
+    const checkedBoxes = document.querySelectorAll('.post-checkbox:checked');
+    if (checkedBoxes.length === 0) return;
+
+    document.getElementById('bulkEditCount').textContent = checkedBoxes.length;
+    new bootstrap.Modal(document.getElementById('bulkEditModal')).show();
+  }
+
+  // Save Bulk Edit
+  function saveBulkEdit() {
+    const checkedBoxes = document.querySelectorAll('.post-checkbox:checked');
+    if (checkedBoxes.length === 0) return;
+
+    const postIds = Array.from(checkedBoxes).map(cb => cb.value);
+    const formData = new FormData(document.getElementById('bulkEditForm'));
+
+    // Add post IDs to form data
+    postIds.forEach(id => {
+      formData.append('post_ids', id);
+    });
+
+    fetch('/admin/bulk-edit', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('bulkEditModal')).hide();
+        location.reload(); // Refresh to show changes
+      } else {
+        alert('Error updating posts: ' + data.message);
+      }
+    })
+    .catch(err => {
+      alert('Error updating posts: ' + err.message);
+    });
+  }
+
+  // Quick Create functionality
+  function quickCreate() {
+    // Reset form
+    document.getElementById('quickCreateForm').reset();
+    document.getElementById('createAuthor').value = '{{ current_user.username if current_user else "Admin" }}';
+    document.getElementById('createCategory').value = 'General';
+
+    // Reset preview
+    updateCreatePreview();
+
+    // Hide image preview
+    document.getElementById('createImagePreview').classList.add('d-none');
+
+    // Load draft if exists
+    loadDraft();
+
+    new bootstrap.Modal(document.getElementById('quickCreateModal')).show();
+  }
+
+  // Update live preview
+  function updateCreatePreview() {
+    const title = document.getElementById('createTitle').value || 'Title will appear here...';
+    const author = document.getElementById('createAuthor').value || 'Admin';
+    const category = document.getElementById('createCategory').value;
+    const content = document.getElementById('createContent').value;
+    const featured = document.getElementById('createFeatured').checked;
+
+    document.getElementById('previewCreateTitle').textContent = title;
+    document.getElementById('previewCreateAuthor').textContent = author;
+    document.getElementById('previewCreateCategory').textContent = category;
+
+    if (content) {
+      const truncated = content.length > 150 ? content.substring(0, 150) + '...' : content;
+      document.getElementById('previewCreateText').textContent = truncated;
+
+      // Update word and character count
+      const words = content.trim().split(/\s+/).filter(word => word.length > 0).length;
+      document.getElementById('wordCount').textContent = words + ' words';
+      document.getElementById('charCount').textContent = content.length + ' characters';
+    } else {
+      document.getElementById('previewCreateText').textContent = 'Content preview will appear here...';
+      document.getElementById('wordCount').textContent = '0 words';
+      document.getElementById('charCount').textContent = '0 characters';
+    }
+
+    // Update featured badge
+    if (featured) {
+      document.getElementById('previewCreateFeatured').style.display = 'block';
+    } else {
+      document.getElementById('previewCreateFeatured').style.display = 'none';
+    }
+  }
+
+  // Image preview functions
+  function previewCreateImage(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('createPreviewImg').src = e.target.result;
+        document.getElementById('createImagePreview').classList.remove('d-none');
+        // Clear URL input if file is selected
+        document.getElementById('createImageUrl').value = '';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function previewCreateImageUrl(input) {
+    if (input.value) {
+      document.getElementById('createPreviewImg').src = input.value;
+      document.getElementById('createImagePreview').classList.remove('d-none');
+      // Clear file input if URL is entered
+      document.getElementById('createImageFile').value = '';
+    }
+  }
+
+  function removeCreateImage() {
+    document.getElementById('createPreviewImg').src = '';
+    document.getElementById('createImagePreview').classList.add('d-none');
+    document.getElementById('createImageFile').value = '';
+    document.getElementById('createImageUrl').value = '';
+  }
+
+  // Save draft functionality
+  function saveDraft() {
+    const formData = {
+      title: document.getElementById('createTitle').value,
+      content: document.getElementById('createContent').value,
+      author: document.getElementById('createAuthor').value,
+      category: document.getElementById('createCategory').value,
+      featured: document.getElementById('createFeatured').checked,
+      image_url: document.getElementById('createImageUrl').value
+    };
+
+    localStorage.setItem('quickCreateDraft', JSON.stringify(formData));
+
+    // Show success message
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-1"></i>Saved!';
+    btn.classList.remove('btn-outline-primary');
+    btn.classList.add('btn-success');
+
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-outline-primary');
+    }, 2000);
+  }
+
+  // Load draft
+  function loadDraft() {
+    const draft = localStorage.getItem('quickCreateDraft');
+    if (draft) {
+      const data = JSON.parse(draft);
+      document.getElementById('createTitle').value = data.title || '';
+      document.getElementById('createContent').value = data.content || '';
+      document.getElementById('createAuthor').value = data.author || '{{ current_user.username if current_user else "Admin" }}';
+      document.getElementById('createCategory').value = data.category || 'General';
+      document.getElementById('createFeatured').checked = data.featured || false;
+      document.getElementById('createImageUrl').value = data.image_url || '';
+
+      if (data.image_url) {
+        previewCreateImageUrl(document.getElementById('createImageUrl'));
+      }
+
+      updateCreatePreview();
+    }
+  }
+
+  // Save Quick Create
+  function saveQuickCreate() {
+    const form = document.getElementById('quickCreateForm');
+    const formData = new FormData(form);
+
+    // Show progress modal
+    bootstrap.Modal.getInstance(document.getElementById('quickCreateModal')).hide();
+    const progressModal = new bootstrap.Modal(document.getElementById('uploadProgressModal'));
+    progressModal.show();
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = document.getElementById('uploadProgress');
+    const statusText = document.getElementById('uploadStatus');
+
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 30;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + '%';
+
+      if (progress < 30) statusText.textContent = 'Uploading content...';
+      else if (progress < 60) statusText.textContent = 'Processing images...';
+      else if (progress < 90) statusText.textContent = 'Finalizing post...';
+    }, 200);
+
+    fetch('/admin/quick-create', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      clearInterval(progressInterval);
+      progressBar.style.width = '100%';
+      statusText.textContent = 'Complete!';
+
+      setTimeout(() => {
+        progressModal.hide();
+
+        if (data.success) {
+          // Clear draft
+          localStorage.removeItem('quickCreateDraft');
+
+          // Show success message and reload
+          alert('Post created successfully!');
+          location.reload();
+        } else {
+          alert('Error creating post: ' + data.message);
+          // Reopen create modal
+          new bootstrap.Modal(document.getElementById('quickCreateModal')).show();
+        }
+      }, 1000);
+    })
+    .catch(err => {
+      clearInterval(progressInterval);
+      progressModal.hide();
+      alert('Error creating post: ' + err.message);
+      // Reopen create modal
+      new bootstrap.Modal(document.getElementById('quickCreateModal')).show();
+    });
+  }
+
+  // Auto-save draft every 30 seconds
+  setInterval(function() {
+    const modal = document.getElementById('quickCreateModal');
+    if (modal.classList.contains('show')) {
+      const title = document.getElementById('createTitle').value;
+      const content = document.getElementById('createContent').value;
+
+      if (title || content) {
+        saveDraft();
+      }
+    }
+  }, 30000);
+
+  // Auto-refresh stats every 30 seconds
+  setInterval(function () {
+    if (document.visibilityState === "visible") {
+      // Only refresh stats, not the whole page
+      fetch("/admin/stats")
+        .then((response) => response.json())
+        .then((data) => {
+          // Update stats if endpoint exists
+          console.log("Stats updated");
+        })
+        .catch((err) => console.log("Stats update failed"));
+    }
+  }, 30000);
+</script>
+{% endblock %}

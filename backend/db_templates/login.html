@@ -15,7 +15,7 @@
         }
         .login-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         }
@@ -62,7 +62,7 @@
                                     <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
                                         <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
                                         {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        <button></button>type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                     </div>
                                 {% endfor %}
                             {% endif %}
