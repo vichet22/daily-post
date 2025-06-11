@@ -208,21 +208,40 @@ export const PostsProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.posts.updatePost(
-        updatedPost.id,
-        updatedPost,
-        imageFile
-      );
-      if (response.success) {
-        // Reload posts to get updated list
-        await loadPosts();
-        return response.data;
-      } else {
-        throw new Error(response.message || "Failed to update post");
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const savedPosts = localStorage.getItem("dailyPostArticles");
+      const existingPosts = savedPosts
+        ? JSON.parse(savedPosts)
+        : getDefaultPosts();
+
+      // Find and update the post
+      const postIndex = existingPosts.findIndex((p) => p.id === updatedPost.id);
+      if (postIndex === -1) {
+        throw new Error("Post not found");
       }
+
+      // Update the post
+      const updatedPostData = {
+        ...existingPosts[postIndex],
+        ...updatedPost,
+        // Handle image file
+        image: imageFile ? URL.createObjectURL(imageFile) : updatedPost.image,
+      };
+
+      existingPosts[postIndex] = updatedPostData;
+
+      // Save to localStorage
+      localStorage.setItem("dailyPostArticles", JSON.stringify(existingPosts));
+
+      // Reload posts to reflect changes
+      await loadPosts();
+
+      return updatedPostData;
     } catch (err) {
       console.error("Error updating post:", err);
-      setError(err.message);
+      setError("Failed to update post");
       throw err;
     } finally {
       setLoading(false);
@@ -234,17 +253,31 @@ export const PostsProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.posts.deletePost(id);
-      if (response.success) {
-        // Reload posts to get updated list
-        await loadPosts();
-        return true;
-      } else {
-        throw new Error(response.message || "Failed to delete post");
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const savedPosts = localStorage.getItem("dailyPostArticles");
+      const existingPosts = savedPosts
+        ? JSON.parse(savedPosts)
+        : getDefaultPosts();
+
+      // Filter out the post to delete
+      const updatedPosts = existingPosts.filter((p) => p.id !== parseInt(id));
+
+      if (updatedPosts.length === existingPosts.length) {
+        throw new Error("Post not found");
       }
+
+      // Save to localStorage
+      localStorage.setItem("dailyPostArticles", JSON.stringify(updatedPosts));
+
+      // Reload posts to reflect changes
+      await loadPosts();
+
+      return true;
     } catch (err) {
       console.error("Error deleting post:", err);
-      setError(err.message);
+      setError("Failed to delete post");
       throw err;
     } finally {
       setLoading(false);
@@ -261,11 +294,12 @@ export const PostsProvider = ({ children }) => {
     }
 
     try {
-      const response = await api.posts.getAllPosts(category);
-      if (response.success) {
-        return response.data;
-      }
-      return [];
+      const savedPosts = localStorage.getItem("dailyPostArticles");
+      const allPosts = savedPosts ? JSON.parse(savedPosts) : getDefaultPosts();
+
+      return allPosts.filter(
+        (post) => post.category.toLowerCase() === category.toLowerCase()
+      );
     } catch (err) {
       console.error("Error getting posts by category:", err);
       return posts.filter(
