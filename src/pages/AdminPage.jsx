@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
+import { usePosts } from "../context/PostsContext";
 import AdminLogin from "../components/AdminLogin";
 import "./AdminPage.css";
 
 const AdminPage = () => {
-  const { posts, dispatch, ACTIONS, adminAuthenticated } = useApp();
+  const { dispatch, ACTIONS, adminAuthenticated } = useApp();
+  const { posts, addPost, updatePost, deletePost, loading, error } = usePosts();
 
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState(null);

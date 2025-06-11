@@ -1,14 +1,9 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
-import { posts as initialPosts } from "../data/posts";
 
 const AppContext = createContext();
 
 // Action types
 const ACTIONS = {
-  SET_POSTS: "SET_POSTS",
-  ADD_POST: "ADD_POST",
-  UPDATE_POST: "UPDATE_POST",
-  DELETE_POST: "DELETE_POST",
   SET_SEARCH_QUERY: "SET_SEARCH_QUERY",
   SET_ACTIVE_CATEGORY: "SET_ACTIVE_CATEGORY",
   SET_SELECTED_POST: "SET_SELECTED_POST",
@@ -23,7 +18,6 @@ const ACTIONS = {
 
 // Initial state
 const initialState = {
-  posts: [],
   searchQuery: "",
   activeCategory: "all",
   selectedPost: null,
@@ -39,43 +33,11 @@ const initialState = {
 // Reducer function
 function appReducer(state, action) {
   switch (action.type) {
-    case ACTIONS.SET_POSTS:
-      return { ...state, posts: action.payload };
-
-    case ACTIONS.ADD_POST:
-      const newPost = {
-        ...action.payload,
-        id: Date.now(),
-        date:
-          new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }) + " PM",
-      };
-      return { ...state, posts: [newPost, ...state.posts] };
-
-    case ACTIONS.UPDATE_POST:
-      return {
-        ...state,
-        posts: state.posts.map((post) =>
-          post.id === action.payload.id ? { ...post, ...action.payload } : post
-        ),
-      };
-
-    case ACTIONS.DELETE_POST:
-      return {
-        ...state,
-        posts: state.posts.filter((post) => post.id !== action.payload),
-      };
-
     case ACTIONS.SET_SEARCH_QUERY:
-      return { ...state, searchQuery: action.payload };
+      return { ...state, searchQuery: action.payload, currentPage: 1 };
 
     case ACTIONS.SET_ACTIVE_CATEGORY:
-      return { ...state, activeCategory: action.payload };
+      return { ...state, activeCategory: action.payload, currentPage: 1 };
 
     case ACTIONS.SET_SELECTED_POST:
       return { ...state, selectedPost: action.payload };
@@ -114,28 +76,13 @@ function appReducer(state, action) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Load posts from localStorage on mount
+  // Check for saved admin authentication on mount
   useEffect(() => {
-    const savedPosts = localStorage.getItem("dailyPostPosts");
-    if (savedPosts) {
-      dispatch({ type: ACTIONS.SET_POSTS, payload: JSON.parse(savedPosts) });
-    } else {
-      dispatch({ type: ACTIONS.SET_POSTS, payload: initialPosts });
-    }
-
-    // Check for saved admin authentication
     const adminAuth = localStorage.getItem("dailyPostAdminAuth");
     if (adminAuth === "true") {
       dispatch({ type: ACTIONS.SET_ADMIN_AUTHENTICATED, payload: true });
     }
   }, []);
-
-  // Save posts to localStorage whenever posts change
-  useEffect(() => {
-    if (state.posts.length > 0) {
-      localStorage.setItem("dailyPostPosts", JSON.stringify(state.posts));
-    }
-  }, [state.posts]);
 
   // Save admin authentication state
   useEffect(() => {
@@ -145,32 +92,8 @@ export function AppProvider({ children }) {
     );
   }, [state.adminAuthenticated]);
 
-  // Computed values
-  const filteredPosts = state.posts.filter((post) => {
-    const matchesCategory =
-      state.activeCategory === "all" ||
-      post.category.toLowerCase() === state.activeCategory;
-
-    const matchesSearch =
-      state.searchQuery === "" ||
-      post.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(state.searchQuery.toLowerCase());
-
-    return matchesCategory && matchesSearch;
-  });
-
-  const paginatedPosts = filteredPosts.slice(
-    0,
-    state.currentPage * state.postsPerPage
-  );
-  const hasMorePosts = filteredPosts.length > paginatedPosts.length;
-
   const value = {
     ...state,
-    filteredPosts,
-    paginatedPosts,
-    hasMorePosts,
     dispatch,
     ACTIONS,
   };
