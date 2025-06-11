@@ -1,0 +1,184 @@
+{% extends "base.html" %} {% block title %}Search Results{% if query %} for "{{
+query }}"{% endif %} - Daily Post{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Search Header -->
+    <div class="mb-4">
+      <h1><i class="fas fa-search me-2"></i>Search Results</h1>
+      {% if query %}
+      <p class="lead">Results for: <strong>"{{ query }}"</strong></p>
+      <p class="text-muted">Found {{ posts|length }} result(s)</p>
+      {% else %}
+      <p class="lead">Enter a search term to find posts</p>
+      {% endif %}
+    </div>
+
+    <!-- Search Form -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="GET" action="{{ url_for('search') }}">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control form-control-lg"
+              name="q"
+              value="{{ query }}"
+              placeholder="Search posts by title or content..."
+            />
+            <button class="btn btn-primary" type="submit">
+              <i class="fas fa-search me-2"></i>Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    {% if query %} {% if posts %} {% for post in posts %}
+    <article class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge bg-secondary">{{ post.category }}</span>
+              <small class="text-muted"
+                >{{ post.date_posted.strftime('%B %d, %Y') }}</small
+              >
+            </div>
+
+            <h3 class="card-title">
+              <a
+                href="{{ url_for('post', id=post.id) }}"
+                class="text-decoration-none"
+              >
+                {{ post.title }}
+              </a>
+            </h3>
+
+            <p class="card-text">
+              {{ post.content[:300] }}{% if post.content|length > 300 %}...{%
+              endif %}
+            </p>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">
+                <i class="fas fa-user me-1"></i>By {{ post.author }} {% if
+                post.featured %}
+                <span class="badge bg-warning text-dark ms-2">
+                  <i class="fas fa-star me-1"></i>Featured
+                </span>
+                {% endif %}
+              </small>
+              <a
+                href="{{ url_for('post', id=post.id) }}"
+                class="btn btn-primary"
+              >
+                Read More <i class="fas fa-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+          <div
+            class="col-md-4 d-flex align-items-center justify-content-center"
+          >
+            {% if post.image_url %}
+            <img
+              src="{{ post.image_url }}"
+              alt="{{ post.title }}"
+              class="img-fluid rounded"
+              style="height: 150px; width: 100%; object-fit: cover"
+            />
+            {% else %}
+            <div
+              class="placeholder-image bg-light rounded d-flex align-items-center justify-content-center"
+              style="height: 150px; width: 100%"
+            >
+              <i class="fas fa-image fa-3x text-muted"></i>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </article>
+    {% endfor %} {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-search fa-4x text-muted mb-3"></i>
+      <h3 class="text-muted">No results found</h3>
+      <p class="text-muted">Try different keywords or browse our categories</p>
+      <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home me-2"></i>Back to Home
+      </a>
+    </div>
+    {% endif %} {% endif %}
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <div class="sticky-top" style="top: 100px">
+      <!-- Search Tips -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Search Tips</h6>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Use specific keywords
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Try different word combinations
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-check text-success me-2"></i>
+              Search by author name
+            </li>
+            <li class="mb-0">
+              <i class="fas fa-check text-success me-2"></i>
+              Browse by category
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-tags me-2"></i>Browse Categories
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <a
+              href="{{ url_for('category', category='General') }}"
+              class="btn btn-outline-secondary btn-sm"
+              >General</a
+            >
+            <a
+              href="{{ url_for('category', category='Technology') }}"
+              class="btn btn-outline-secondary btn-sm"
+              >Technology</a
+            >
+            <a
+              href="{{ url_for('category', category='Sports') }}"
+              class="btn btn-outline-secondary btn-sm"
+              >Sports</a
+            >
+            <a
+              href="{{ url_for('category', category='Business') }}"
+              class="btn btn-outline-secondary btn-sm"
+              >Business</a
+            >
+            <a
+              href="{{ url_for('category', category='Entertainment') }}"
+              class="btn btn-outline-secondary btn-sm"
+              >Entertainment</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
